@@ -8,7 +8,7 @@
 </h5>
 
 This is the official implementation of the following paper: 
-> **All in One and One for All: A Simple yet Effective Method towards Cross-domain Graph Pretraining** [[Paper](https://arxiv.org/pdf/2402.09834)], KDD'24
+> **All in One and One for All: A Simple yet Effective Method towards Cross-domain Graph Pretraining** [[Paper](https://dl.acm.org/doi/abs/10.1145/3637528.3671913)], KDD'24
 > 
 > Haihong Zhao*, Aochuan Chen*, Xiangguo sun*†, Hong Cheng, Jia Li†
 
