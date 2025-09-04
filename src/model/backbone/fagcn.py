@@ -46,9 +46,6 @@ class FAGCN(torch.nn.Module):
             return graph_emb, h
 
 
-from fastargs.decorators import param
-
-
 @param("model.backbone.hid_dim")
 @param("model.backbone.fagcn.num_conv_layers")
 @param("model.backbone.fagcn.dropout")

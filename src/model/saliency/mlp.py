@@ -1,4 +1,5 @@
 import torch
+from fastargs.decorators import param
 
 
 class MLPSaliency(torch.nn.Module):
@@ -34,9 +35,6 @@ class MLPSaliency(torch.nn.Module):
             x = torch.relu(lin(x)) if i != len(self.lins) - 1 else lin(x)
 
         return torch.sigmoid(x) * x_ori
-
-
-from fastargs.decorators import param
 
 
 @param("model.saliency.mlp.hid_dim")

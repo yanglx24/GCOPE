@@ -1,6 +1,14 @@
-import copy
+import numpy as np
+import os
 from fastargs.decorators import param
 import torch
+from data.supervised import get_supervised_data
+from torch_geometric.loader import DataLoader
+from model.main import get_model
+from model.prompt import get_prompt_model
+from torchmetrics import MeanMetric, Accuracy, F1Score, AUROC
+from tqdm import tqdm
+from copy import deepcopy
 
 
 @param("data.name", "dataset")
@@ -27,9 +35,6 @@ def run(
 ):
 
     # load data
-    from data import get_supervised_data
-    from torch_geometric.loader import DataLoader
-
     datasets, num_classes = get_supervised_data(dataset[0], ratios=ratios)
     loaders = {
         k: DataLoader(v, batch_size=batch_size, shuffle=True, num_workers=4)
@@ -37,8 +42,6 @@ def run(
     }
 
     # init model
-    from model import get_model
-
     model = get_model(
         backbone_kwargs={
             "name": backbone_model,
@@ -69,8 +72,6 @@ def run(
         if method == "finetune":
             results = finetune(loaders, model)
         elif method == "prog":
-            from model import get_prompt_model
-
             # statistic the average node number of dataset
             total_graph = sum([len(v) for k, v in datasets.items()])
             train_node_num = sum([g.num_nodes for g in datasets["train"]])
@@ -91,14 +92,10 @@ def run(
         all_results.append(results)
 
     # print acc, auroc, f1 with std
-    import numpy as np
-
     for k in all_results[0].keys():
         print(
             f"{k}: {np.mean([r[k] for r in all_results]):.4f} ± {np.std([r[k] for r in all_results]):.4f}"
         )
-
-    import os
 
     if method != "prog":
         with open(os.path.join(save_dir, dataset[0] + "_results.txt"), "a+") as f:
@@ -146,10 +143,6 @@ def finetune(
         lr=learning_rate,
         weight_decay=weight_decay,
     )
-
-    from torchmetrics import MeanMetric, Accuracy, F1Score, AUROC
-    from tqdm import tqdm
-    from copy import deepcopy
 
     loss_metric = MeanMetric().to(device)
     acc_metric = Accuracy(task="multiclass", num_classes=model.answering.num_class).to(
@@ -298,10 +291,6 @@ def prog(
         weight_decay=ans_weight_decay,
     )
 
-    from torchmetrics import MeanMetric, Accuracy, F1Score, AUROC
-    from tqdm import tqdm
-    from copy import deepcopy
-
     loss_metric = MeanMetric().to(device)
     acc_metric = Accuracy(task="multiclass", num_classes=model.answering.num_class).to(
         device
@@ -314,9 +303,6 @@ def prog(
     )
 
     # load prompting data
-
-    from torch_geometric.loader import DataLoader
-
     best_acc = 0.0
     best_backbone = None
     best_prompt_model = None
@@ -339,8 +325,6 @@ def prog(
         prompt_model.train()
         model.backbone.eval()
         model.answering.train()
-
-        from tqdm import tqdm
 
         device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
 

@@ -2,6 +2,16 @@ from fastargs.decorators import param
 import numpy as np
 import torch
 from copy import deepcopy
+from model import get_model
+import os
+import random
+from torch_geometric.data import Data
+from torch_geometric.loader import DataLoader
+from algorithm.graph_augment import graph_views
+from torchmetrics import MeanMetric
+from tqdm import tqdm
+from data.contrastive import update_graph_list_param, get_clustered_data
+from data.utils import gen_ran_output
 
 
 @param("general.save_dir")
@@ -21,13 +31,9 @@ def run(
 
     if saliency_model == "mlp":
         # load data
-        from data import get_clustered_data
-
         data = get_clustered_data(dataset)
 
         # init model
-        from model import get_model
-
         model = get_model(
             backbone_kwargs={
                 "name": backbone_model,
@@ -44,14 +50,10 @@ def run(
         )
     else:
         # load data
-        from data import get_clustered_data
-
         with torch.no_grad():
             data, gco_model, raw_data = get_clustered_data(dataset)
 
         # init model
-        from model import get_model
-
         model = get_model(
             backbone_kwargs={
                 "name": backbone_model,
@@ -76,8 +78,6 @@ def run(
         raise NotImplementedError(f"Unknown method: {method}")
 
     # save
-    import os
-
     torch.save(
         model.state_dict(),
         os.path.join(save_dir, ",".join(dataset) + "_pretrained_model.pt"),
@@ -109,12 +109,6 @@ def graph_cl_pretrain(
 
     @param("pretrain.batch_size")
     def get_loaders(data, batch_size):
-
-        import random
-        from torch_geometric.data import Data
-        from torch_geometric.loader import DataLoader
-        from algorithm.graph_augment import graph_views
-
         augs, aug_ratio = (
             random.choices(["dropN", "permE", "maskN"], k=2),
             random.randint(1, 3) * 1.0 / 10,
@@ -237,10 +231,6 @@ def graph_cl_pretrain(
 
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epoch)
 
-    from torchmetrics import MeanMetric
-    from tqdm import tqdm
-    from data.contrastive import update_graph_list_param
-
     loss_metric = MeanMetric()
 
     for e in range(epoch):
@@ -327,9 +317,6 @@ def simgrace_pretrain(
     split_method,
     batch_size,
 ):
-
-    from torch_geometric.loader import DataLoader
-    from data import gen_ran_output
 
     class SimgraceLoss(torch.nn.Module):
         def __init__(self, gnn, hidden_dim, temperature=0.5):
@@ -445,10 +432,6 @@ def simgrace_pretrain(
             )
 
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epoch)
-
-    from torchmetrics import MeanMetric
-    from tqdm import tqdm
-    from data.contrastive import update_graph_list_param
 
     loss_metric = MeanMetric()
 

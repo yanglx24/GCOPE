@@ -1,13 +1,14 @@
 from fastargs.decorators import param
 import torch
+from torch_geometric.utils import subgraph, k_hop_subgraph
+from torch_geometric.data import Data
+import numpy as np
+import os
+from data.utils import preprocess, iterate_datasets
+from torch.utils.data import random_split, Subset
 
 
 def induced_graphs(data, smallest_size=10, largest_size=30):
-
-    from torch_geometric.utils import subgraph, k_hop_subgraph
-    from torch_geometric.data import Data
-    import numpy as np
-
     induced_graph_list = []
     total_node_num = data.x.size(0)
 
@@ -62,9 +63,6 @@ def induced_graphs(data, smallest_size=10, largest_size=30):
 @param("general.cache_dir")
 @param("general.few_shot")
 def get_supervised_data(dataset, ratios, seed, cache_dir, few_shot):
-
-    import os
-
     cache_dir = os.path.join(cache_dir, dataset)
     os.makedirs(cache_dir, exist_ok=True)
 
@@ -79,14 +77,10 @@ def get_supervised_data(dataset, ratios, seed, cache_dir, few_shot):
         if os.path.exists(cache_path):
             return torch.load(cache_path)
 
-        from .utils import preprocess, iterate_datasets
-
         data = preprocess(next(iterate_datasets(dataset)))
 
         num_classes = torch.unique(data.y).size(0)
         target_graph_list = induced_graphs(data)
-
-        from torch.utils.data import random_split
 
         train_set, val_set, test_set = random_split(
             target_graph_list, ratios, torch.Generator().manual_seed(seed)
@@ -98,16 +92,12 @@ def get_supervised_data(dataset, ratios, seed, cache_dir, few_shot):
         if os.path.exists(cache_path):
             return torch.load(cache_path)
 
-        from .utils import preprocess, iterate_datasets
-
         data = preprocess(next(iterate_datasets(dataset)))
 
         num_classes = torch.unique(data.y).size(0)
         train_dict_list = {key.item(): [] for key in torch.unique(data.y)}
         val_test_list = []
         target_graph_list = induced_graphs(data)
-
-        from torch.utils.data import random_split, Subset
 
         for index, graph in enumerate(target_graph_list):
 

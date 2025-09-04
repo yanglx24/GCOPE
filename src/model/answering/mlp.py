@@ -1,4 +1,5 @@
 import torch
+from fastargs.decorators import param
 
 
 class MLPAnswering(torch.nn.Module):
@@ -33,9 +34,6 @@ class MLPAnswering(torch.nn.Module):
         x = self.final_answer(x)
         prediction = torch.log_softmax(x, dim=-1)
         return prediction
-
-
-from fastargs.decorators import param
 
 
 @param("model.backbone.hid_dim")

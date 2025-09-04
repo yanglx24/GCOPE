@@ -2,7 +2,6 @@ from copy import deepcopy
 import torch
 from torch_geometric.transforms import SVDFeatureReduction
 from torch_geometric.datasets import Planetoid, WebKB, Amazon, WikipediaNetwork
-from torch_geometric.data import Data
 from torch_geometric.utils import degree, add_self_loops
 from fastargs.decorators import param
 import math
@@ -55,9 +54,7 @@ def iterate_datasets(data_names, cache_dir):
         else:
             raise ValueError(f"Unknown dataset: {data_name}")
 
-        assert isinstance(data, (Data, dict)), f"Unknown data type: {type(data)}"
-
-        yield data if isinstance(data, Data) else Data(**data)
+        yield data
 
 
 @param("general.cache_dir")
@@ -84,9 +81,7 @@ def iterate_dataset_feature_tokens(data_names, cache_dir):
         else:
             raise ValueError(f"Unknown dataset: {data_name}")
 
-        assert isinstance(data, (Data, dict)), f"Unknown data type: {type(data)}"
-
-        yield data if isinstance(data, Data) else Data(**data)
+        yield data
 
 
 # including projection operation, SVD

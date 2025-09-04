@@ -5,7 +5,6 @@ from fastargs.decorators import param
 from model.backbone.gcn_conv import GCNConv
 from torch.nn import BatchNorm1d
 import torch.nn.functional as F
-import pdb
 
 
 class GCN(torch.nn.Module):

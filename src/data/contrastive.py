@@ -1,8 +1,11 @@
-import time
 from fastargs.decorators import param
 import torch
 from torch_geometric.data import Batch
 import numpy as np
+from copy import deepcopy
+from data.utils import preprocess, iterate_datasets
+from model.graph_coordinator import GraphCoordinator
+from torch_cluster import random_walk
 
 
 @param("general.cache_dir")
@@ -23,13 +26,9 @@ def get_clustered_data(
     split_method="RandomWalk",
 ):
 
-    from .utils import preprocess, iterate_datasets
-
     data_list = [preprocess(data) for data in iterate_datasets(dataset)]
-    from torch_geometric.data import Batch
 
     data = Batch.from_data_list(data_list)
-    from copy import deepcopy
 
     data_for_similarity_computation = deepcopy(data)
 
@@ -83,7 +82,6 @@ def get_clustered_data(
             )
             data.x = torch.cat([data.x, new_node_features], dim=0)
         elif cl_init_method == "learnable":
-            from model.graph_coordinator import GraphCoordinator
 
             gco_model = GraphCoordinator(data.num_node_features, len(new_index_list))
             data.x = gco_model.add_learnable_features_with_no_grad(data.x)
@@ -275,8 +273,6 @@ def get_clustered_data(
     raw_data = deepcopy(data)
 
     if split_method == "RandomWalk":
-        from torch_cluster import random_walk
-
         split_ratio = 0.1
         walk_length = 30
         all_random_node_list = torch.randperm(data.num_nodes)

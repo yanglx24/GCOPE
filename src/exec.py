@@ -4,6 +4,11 @@ from fastargs.decorators import param
 from fastargs.validation import OneOf, File, ListOfFloats, Folder, SubsetOf, BoolAsInt
 import argparse
 import os
+import random
+import numpy as np
+import torch
+import sys
+
 
 Section("general", "General Configs").params(
     func=Param(OneOf(["pretrain", "adapt", "ete"]), required=True),
@@ -75,16 +80,12 @@ Section("data", "Data Configs").params(
     name=Param(
         SubsetOf(
             [
-                "wisconsin",
-                "texas",
-                "cornell",
-                "chameleon",
-                "squirrel",
-                "cora",
-                "citeseer",
-                "pubmed",
-                "computers",
-                "photo",
+                "ogbn-arxiv",
+                "Computers",
+                "Reddit",
+                "FB15k_237",
+                "HIV",
+                "PROTEINS",
             ]
         ),
         required=True,
@@ -193,13 +194,8 @@ Section("ete", "End-to-End Training Configs").enable_if(
 @param("general.seed")
 @param("data.name")
 def run(func, seed, name):
-    import sys
-
     sys.path.append("src")
     # Fix all randomness
-    import random
-    import numpy as np
-    import torch
 
     random.seed(seed)
     np.random.seed(seed)
