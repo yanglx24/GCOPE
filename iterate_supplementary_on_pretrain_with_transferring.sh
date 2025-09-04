@@ -8,10 +8,11 @@ split_method="RandomWalk"
 few_shot=1
 batch_sizes=(100) 
 
+python src/exec.py --config-file pretrain.json --general.save_dir "storage/fagcn/reconstruct" --general.reconstruct 0.2 --data.name wisconsin,texas,cornell --pretrain.split_method RandomWalk --model.backbone.model_type fagcn
 
 for target_dataset in "${target_datasets[@]}"; do
     source_dataset_str=""
-    datasets=("wisconsin" "texas" "cornell" "chameleon" "squirrel" "cora" "citeseer" "pubmed" "computers" "photo")
+    datasets=("wisconsin" "texas" "cornell")
     for dataset in "${datasets[@]}"; do
         if [ "$dataset" != "$target_dataset" ]; then
             source_dataset_str+="${dataset},"

@@ -2,6 +2,7 @@ import torch
 from torch_geometric.nn import global_add_pool, FAConv
 from fastargs.decorators import param
 
+
 class FAGCN(torch.nn.Module):
 
     def __init__(self, num_features, hidden, num_conv_layers, dropout, epsilon):
@@ -24,7 +25,7 @@ class FAGCN(torch.nn.Module):
         torch.nn.init.xavier_normal_(self.t1.weight, gain=1.414)
         torch.nn.init.xavier_normal_(self.t2.weight, gain=1.414)
 
-    @param('general.reconstruct')
+    @param("general.reconstruct")
     def forward(self, data, reconstruct):
 
         x = data.x if data.x is not None else data.feat
@@ -39,7 +40,7 @@ class FAGCN(torch.nn.Module):
         h = self.t2(h)
         graph_emb = self.global_pool(h, batch)
 
-        if(reconstruct==0.0):
+        if reconstruct == 0.0:
             return graph_emb
         else:
             return graph_emb, h
@@ -47,9 +48,10 @@ class FAGCN(torch.nn.Module):
 
 from fastargs.decorators import param
 
-@param('model.backbone.hid_dim')
-@param('model.backbone.fagcn.num_conv_layers')
-@param('model.backbone.fagcn.dropout')
-@param('model.backbone.fagcn.epsilon')
+
+@param("model.backbone.hid_dim")
+@param("model.backbone.fagcn.num_conv_layers")
+@param("model.backbone.fagcn.dropout")
+@param("model.backbone.fagcn.epsilon")
 def get_model(num_features, hid_dim, num_conv_layers, dropout, epsilon):
     return FAGCN(num_features, hid_dim, num_conv_layers, dropout, epsilon)

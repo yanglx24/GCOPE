@@ -16,8 +16,11 @@ def drop_nodes(data, aug_ratio):
 
     edge_index = data.edge_index.numpy()
 
-    edge_index = [[idx_dict[edge_index[0, n]], idx_dict[edge_index[1, n]]] for n in range(edge_num) if
-                  (not edge_index[0, n] in idx_drop) and (not edge_index[1, n] in idx_drop)]
+    edge_index = [
+        [idx_dict[edge_index[0, n]], idx_dict[edge_index[1, n]]]
+        for n in range(edge_num)
+        if (not edge_index[0, n] in idx_drop) and (not edge_index[1, n] in idx_drop)
+    ]
     try:
         data.edge_index = torch.tensor(edge_index).transpose_(0, 1)
         data.x = data.x[idx_nondrop]
@@ -48,18 +51,18 @@ def mask_nodes(data, aug_ratio):
     idx_mask = np.random.choice(node_num, mask_num, replace=False)
     data.x[idx_mask] = token.clone().detach()
 
-    return data    
+    return data
 
 
 def graph_views(data, aug, aug_ratio=0.1):
-    
-    if aug == 'dropN':
+
+    if aug == "dropN":
         data = drop_nodes(data, aug_ratio)
-    elif aug == 'permE':
+    elif aug == "permE":
         data = permute_edges(data, aug_ratio)
-    elif aug == 'maskN':
+    elif aug == "maskN":
         data = mask_nodes(data, aug_ratio)
     else:
-        raise NotImplementedError(f'{aug} not implemented')
-    
+        raise NotImplementedError(f"{aug} not implemented")
+
     return data
