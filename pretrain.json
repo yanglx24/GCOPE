@@ -20,7 +20,7 @@
     },
     "data": {
         "seed": 777,
-        "node_feature_dim": 100,
+        "node_feature_dim": 100
     },
     "pretrain": {
         "method": "graphcl",
@@ -29,6 +29,6 @@
         "epoch": 100,
         "batch_size": 10,
         "cross_link":1,
-        "cl_init_method": "learnable",
+        "cl_init_method": "learnable"
     }
 }
