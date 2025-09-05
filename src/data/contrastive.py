@@ -25,7 +25,9 @@ def get_clustered_data(
     dynamic_prune=0.0,
     split_method="RandomWalk",
 ):
+    import pdb
 
+    pdb.set_trace()
     data_list = [preprocess(data) for data in iterate_datasets(dataset)]
 
     data = Batch.from_data_list(data_list)

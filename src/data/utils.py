@@ -1,7 +1,17 @@
 from copy import deepcopy
 import torch
 from torch_geometric.transforms import SVDFeatureReduction
-from torch_geometric.datasets import Planetoid, WebKB, Amazon, WikipediaNetwork
+from torch_geometric.datasets import (
+    TUDataset,
+    Reddit,
+    AttributedGraphDataset,
+    Planetoid,
+    Amazon,
+    FacebookPagePage,
+    WordNet18RR,
+    TUDataset,
+    MoleculeNet,
+)
 from torch_geometric.utils import degree, add_self_loops
 from fastargs.decorators import param
 import math
@@ -32,33 +42,6 @@ def x_svd(data, out_dim):
 
 @param("general.cache_dir")
 def iterate_datasets(data_names, cache_dir):
-
-    if isinstance(data_names, str):
-        data_names = [data_names]
-
-    for data_name in data_names:
-        if data_name in ["cora", "citeseer", "pubmed"]:
-            data = Planetoid(root=cache_dir, name=data_name.capitalize())._data
-        elif data_name in ["wisconsin", "texas", "cornell"]:
-            data = WebKB(root=cache_dir, name=data_name.capitalize())._data
-        elif data_name in ["computers", "photo"]:
-            data = Amazon(root=cache_dir, name=data_name.capitalize())._data
-        elif data_name in ["chameleon", "squirrel"]:
-            preProcDs = WikipediaNetwork(
-                root=cache_dir, name=data_name.capitalize(), geom_gcn_preprocess=False
-            )
-            data = WikipediaNetwork(
-                root=cache_dir, name=data_name.capitalize(), geom_gcn_preprocess=True
-            )._data
-            data.edge_index = preProcDs[0].edge_index
-        else:
-            raise ValueError(f"Unknown dataset: {data_name}")
-
-        yield data
-
-
-@param("general.cache_dir")
-def iterate_dataset_feature_tokens(data_names, cache_dir):
 
     if isinstance(data_names, str):
         data_names = [data_names]
