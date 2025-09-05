@@ -28,52 +28,31 @@ def run(
     method,
     noise_switch,
 ):
+    # load data
+    with torch.no_grad():
+        data, gco_model = get_clustered_data(dataset)
 
-    if saliency_model == "mlp":
-        # load data
-        data = get_clustered_data(dataset)
-
-        # init model
-        model = get_model(
-            backbone_kwargs={
-                "name": backbone_model,
-                "num_features": data[0].x.size(-1),
-            },
-            saliency_kwargs=(
-                {
-                    "name": saliency_model,
-                    "feature_dim": data[0].x.size(-1),
-                }
-                if saliency_model != "none"
-                else None
-            ),
-        )
-    else:
-        # load data
-        with torch.no_grad():
-            data, gco_model, raw_data = get_clustered_data(dataset)
-
-        # init model
-        model = get_model(
-            backbone_kwargs={
-                "name": backbone_model,
-                "num_features": data[0].x.size(-1),
-            },
-            saliency_kwargs=(
-                {
-                    "name": saliency_model,
-                    "feature_dim": data[0].x.size(-1),
-                }
-                if saliency_model != "none"
-                else None
-            ),
-        )
+    # init model
+    model = get_model(
+        backbone_kwargs={
+            "name": backbone_model,
+            "num_features": data[0].x.shape[1],
+        },
+        saliency_kwargs=(
+            {
+                "name": saliency_model,
+                "feature_dim": data[0].x.shape[1],
+            }
+            if saliency_model != "none"
+            else None
+        ),
+    )
 
     # train
     if method == "graphcl":
-        model = graph_cl_pretrain(data, model, gco_model, raw_data)
+        model = graph_cl_pretrain(data, model, gco_model)
     elif method == "simgrace":
-        model = simgrace_pretrain(data, model, gco_model, raw_data)
+        model = simgrace_pretrain(data, model, gco_model)
     else:
         raise NotImplementedError(f"Unknown method: {method}")
 
@@ -90,13 +69,12 @@ def run(
 @param("pretrain.cross_link")
 @param("pretrain.cl_init_method")
 @param("general.reconstruct")
-@param("pretrain.split_method")
 @param("pretrain.dynamic_edge")
+@param("pretrain.split_method")
 def graph_cl_pretrain(
     data,
     model,
     gco_model,
-    raw_data,
     learning_rate,
     weight_decay,
     epoch,
@@ -106,7 +84,6 @@ def graph_cl_pretrain(
     dynamic_edge,
     split_method,
 ):
-
     @param("pretrain.batch_size")
     def get_loaders(data, batch_size):
         augs, aug_ratio = (
@@ -169,65 +146,40 @@ def graph_cl_pretrain(
             reconstruction_features = self.decoder(hidden_features)
             return self.loss_fn(input_features, reconstruction_features)
 
-    device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     loss_fn = ContrastiveLoss(model.backbone.hidden_dim).to(device)
     loss_fn.train(), model.to(device).train()
-    best_loss = 100000.0
+    best_loss = 1e9
     best_model = None
-    if gco_model == None:
-        if reconstruct == 0.0:
-            optimizer = torch.optim.Adam(
-                filter(
-                    lambda p: p.requires_grad,
-                    list(model.parameters()) + list(loss_fn.parameters()),
-                ),
-                lr=learning_rate,
-                weight_decay=weight_decay,
-            )
-        else:
-            rec_loss_fn = ReconstructionLoss(
-                model.backbone.hidden_dim, data[0].num_node_features
-            ).to(device)
-            rec_loss_fn.train()
-            optimizer = torch.optim.Adam(
-                filter(
-                    lambda p: p.requires_grad,
-                    list(model.parameters())
-                    + list(loss_fn.parameters())
-                    + list(rec_loss_fn.parameters()),
-                ),
-                lr=learning_rate,
-                weight_decay=weight_decay,
-            )
+
+    if reconstruct == 0.0:
+        optimizer = torch.optim.Adam(
+            filter(
+                lambda p: p.requires_grad,
+                list(gco_model.parameters())
+                + list(model.parameters())
+                + list(loss_fn.parameters()),
+            ),
+            lr=learning_rate,
+            weight_decay=weight_decay,
+        )
     else:
-        if reconstruct == 0.0:
-            optimizer = torch.optim.Adam(
-                filter(
-                    lambda p: p.requires_grad,
-                    list(gco_model.parameters())
-                    + list(model.parameters())
-                    + list(loss_fn.parameters()),
-                ),
-                lr=learning_rate,
-                weight_decay=weight_decay,
-            )
-        else:
-            rec_loss_fn = ReconstructionLoss(
-                model.backbone.hidden_dim, data[0].num_node_features
-            ).to(device)
-            rec_loss_fn.train()
-            optimizer = torch.optim.Adam(
-                filter(
-                    lambda p: p.requires_grad,
-                    list(gco_model.parameters())
-                    + list(model.parameters())
-                    + list(loss_fn.parameters())
-                    + list(rec_loss_fn.parameters()),
-                ),
-                lr=learning_rate,
-                weight_decay=weight_decay,
-            )
+        rec_loss_fn = ReconstructionLoss(
+            model.backbone.hidden_dim, data[0].num_node_features
+        ).to(device)
+        rec_loss_fn.train()
+        optimizer = torch.optim.Adam(
+            filter(
+                lambda p: p.requires_grad,
+                list(gco_model.parameters())
+                + list(model.parameters())
+                + list(loss_fn.parameters())
+                + list(rec_loss_fn.parameters()),
+            ),
+            lr=learning_rate,
+            weight_decay=weight_decay,
+        )
 
     lr_scheduler = torch.optim.lr_scheduler.CosineAnnealingLR(optimizer, T_max=epoch)
 
@@ -241,8 +193,6 @@ def graph_cl_pretrain(
             if split_method == "RandomWalk":
                 last_updated_data = deepcopy(data)
 
-            loaders = get_loaders(data)
-        elif e == 0:
             loaders = get_loaders(data)
 
         pbar = tqdm(
@@ -306,7 +256,6 @@ def simgrace_pretrain(
     data,
     model,
     gco_model,
-    raw_data,
     learning_rate,
     weight_decay,
     epoch,

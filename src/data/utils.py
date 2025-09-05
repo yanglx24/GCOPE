@@ -1,16 +1,9 @@
 from copy import deepcopy
 import torch
 from torch_geometric.transforms import SVDFeatureReduction
-from torch_geometric.datasets import (
-    TUDataset,
-    Reddit,
-    AttributedGraphDataset,
-    Planetoid,
-    Amazon,
-    FacebookPagePage,
-    WordNet18RR,
-    TUDataset,
-    MoleculeNet,
+from data.data_loader import (
+    load_pretrain_single_graph_data,
+    load_pretrain_multi_graph_data,
 )
 from torch_geometric.utils import degree, add_self_loops
 from fastargs.decorators import param
@@ -41,60 +34,24 @@ def x_svd(data, out_dim):
 
 
 @param("general.cache_dir")
-def iterate_datasets(data_names, cache_dir):
-
+def load_datasets(data_names, cache_dir):
     if isinstance(data_names, str):
         data_names = [data_names]
-
     for data_name in data_names:
-        if data_name in ["cora", "citeseer", "pubmed"]:
-            data = Planetoid(root=cache_dir, name=data_name.capitalize())._data
-        elif data_name in ["wisconsin", "texas", "cornell"]:
-            data = WebKB(root=cache_dir, name=data_name.capitalize())._data
-        elif data_name in ["computers", "photo"]:
-            data = Amazon(root=cache_dir, name=data_name.capitalize())._data
-        elif data_name in ["chameleon", "squirrel"]:
-            preProcDs = WikipediaNetwork(
-                root=cache_dir, name=data_name.capitalize(), geom_gcn_preprocess=False
-            )
-            data = WikipediaNetwork(
-                root=cache_dir, name=data_name.capitalize(), geom_gcn_preprocess=True
-            )._data
-            data.edge_index = preProcDs[0].edge_index
-        else:
-            raise ValueError(f"Unknown dataset: {data_name}")
+        if data_name in ["ogbn-arxiv", "Computers", "Reddit", "FB15k_237"]:
+            data = load_pretrain_single_graph_data(cache_dir, data_name)
+            del data.y, data.edge_weight
+            if data_name == "ogbn-arxiv":
+                del data.num_nodes, data.node_year
+            yield data
+        elif data_name in ["PROTEINS", "HIV"]:
+            dataset = load_pretrain_multi_graph_data(cache_dir, data_name).dataset
+            for data in dataset:
+                del data.y
+                yield data
 
-        yield data
-
-
-# including projection operation, SVD
-@param("data.node_feature_dim")
-def preprocess(data, node_feature_dim):
-
-    if hasattr(data, "train_mask"):
-        del data.train_mask
-    if hasattr(data, "val_mask"):
-        del data.val_mask
-    if hasattr(data, "test_mask"):
-        del data.test_mask
-
-    if node_feature_dim <= 0:
-        edge_index_with_loops = add_self_loops(
-            data.edge_index, num_nodes=data.num_nodes
-        )[0]
-        data.x = degree(edge_index_with_loops[1]).reshape((-1, 1))
-
-    else:
-        # import pdb
-        # pdb.set_trace()
-        if data.x.size(-1) > node_feature_dim:
-            data = x_svd(data, node_feature_dim)
-        elif data.x.size(-1) < node_feature_dim:
-            data = x_padding(data, node_feature_dim)
-        else:
-            pass
-
-    return data
+        # elif data_name in ["Wisconsin", "Texas", "Cornell"]:
+        #     data = load_pretrain_single_graph_data(cache_dir, data_name)
 
 
 # For prompting

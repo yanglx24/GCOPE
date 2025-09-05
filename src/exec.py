@@ -86,6 +86,9 @@ Section("data", "Data Configs").params(
                 "FB15k_237",
                 "HIV",
                 "PROTEINS",
+                "Cornell",
+                "Texas",
+                "Wisconsin",
             ]
         ),
         required=True,

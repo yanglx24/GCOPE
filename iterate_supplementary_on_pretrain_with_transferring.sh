@@ -8,7 +8,7 @@ split_method="RandomWalk"
 few_shot=1
 batch_sizes=(100) 
 
-python src/exec.py --config-file pretrain.json --general.save_dir "storage/fagcn/reconstruct" --general.reconstruct 0.2 --data.name wisconsin,texas,cornell --pretrain.split_method RandomWalk --model.backbone.model_type fagcn
+python src/exec.py --config-file pretrain.json --general.save_dir "storage/fagcn/reconstruct" --general.reconstruct 0.2 --data.name cornell,texas,wisconsin --pretrain.split_method RandomWalk --model.backbone.model_type fagcn
 
 # for target_dataset in "${target_datasets[@]}"; do
 #     source_dataset_str=""

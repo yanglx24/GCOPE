@@ -4,7 +4,7 @@ from torch_geometric.utils import subgraph, k_hop_subgraph
 from torch_geometric.data import Data
 import numpy as np
 import os
-from data.utils import preprocess, iterate_datasets
+from data.utils import preprocess, load_datasets
 from torch.utils.data import random_split, Subset
 
 
