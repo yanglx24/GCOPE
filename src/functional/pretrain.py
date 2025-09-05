@@ -2,7 +2,7 @@ from fastargs.decorators import param
 import numpy as np
 import torch
 from copy import deepcopy
-from model import get_model
+from model.main import get_model
 import os
 import random
 from torch_geometric.data import Data
