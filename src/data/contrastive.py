@@ -77,7 +77,7 @@ def get_clustered_data(
             all_added_node_index = [
                 i for i in range(data.num_nodes - len(new_index_list), data.num_nodes)
             ]
-            for list_index, new_node_index in enumerate(all_added_node_index[:-1]):
+            for _, new_node_index in enumerate(all_added_node_index[:-1]):
                 other_added_node_index_list = [
                     index for index in all_added_node_index if index != new_node_index
                 ]
@@ -89,8 +89,6 @@ def get_clustered_data(
     print(
         f"Unified graph has {data.num_nodes} nodes, each graph includes {cross_link} graph coordinators"
     )
-
-    raw_data = deepcopy(data)
 
     if split_method == "RandomWalk":
         split_ratio = 0.1
